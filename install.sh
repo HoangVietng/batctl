@@ -5,7 +5,7 @@ REPO="Ooooze/batctl"
 BINARY="batctl"
 INSTALL_DIR="/usr/bin"
 SYSTEMD_DIR="/etc/systemd/system"
-UDEV_DIR="/etc/udev/rules.d"
+RESUME_SERVICE="batctl-resume.service"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -28,7 +28,7 @@ Usage: $0 [OPTIONS]
 
 Options:
   --uninstall    Remove batctl and all associated files
-  --no-systemd   Skip systemd service and udev rule installation
+  --no-systemd   Skip systemd services installation
   --version VER  Install a specific version (e.g. 2025.06.1)
   --help         Show this help
 
@@ -122,21 +122,24 @@ WantedBy=multi-user.target
 SERVICE
     ok "Service installed: ${SYSTEMD_DIR}/batctl.service"
 
-    info "Installing udev rule..."
-    cat > "${UDEV_DIR}/99-batctl-resume.rules" <<'UDEV'
-# Restore battery charge thresholds after resume from suspend
-ACTION=="change", SUBSYSTEM=="power_supply", ATTR{type}=="Battery", RUN+="/usr/bin/batctl apply"
-UDEV
-    ok "Udev rule installed: ${UDEV_DIR}/99-batctl-resume.rules"
+    info "Installing resume service..."
+    cat > "${SYSTEMD_DIR}/${RESUME_SERVICE}" <<'RESUME'
+[Unit]
+Description=Restore battery charge thresholds after resume (batctl)
+After=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/batctl apply
+
+[Install]
+WantedBy=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+RESUME
+    ok "Resume service installed: ${SYSTEMD_DIR}/${RESUME_SERVICE}"
 
     if command -v systemctl &>/dev/null; then
         systemctl daemon-reload
         ok "systemd daemon reloaded"
-    fi
-
-    if command -v udevadm &>/dev/null; then
-        udevadm control --reload-rules 2>/dev/null || true
-        ok "udev rules reloaded"
     fi
 }
 
@@ -147,12 +150,13 @@ do_uninstall() {
     if command -v systemctl &>/dev/null; then
         systemctl disable batctl.service 2>/dev/null || true
         systemctl stop batctl.service 2>/dev/null || true
+        systemctl disable "${RESUME_SERVICE}" 2>/dev/null || true
     fi
 
     local files=(
         "${INSTALL_DIR}/${BINARY}"
         "${SYSTEMD_DIR}/batctl.service"
-        "${UDEV_DIR}/99-batctl-resume.rules"
+        "${SYSTEMD_DIR}/${RESUME_SERVICE}"
         "/etc/batctl.conf"
     )
 
@@ -166,10 +170,6 @@ do_uninstall() {
     if command -v systemctl &>/dev/null; then
         systemctl daemon-reload 2>/dev/null || true
     fi
-    if command -v udevadm &>/dev/null; then
-        udevadm control --reload-rules 2>/dev/null || true
-    fi
-
     ok "batctl has been uninstalled"
 }
 
@@ -197,7 +197,7 @@ do_install() {
     if [[ "$skip_systemd" == "false" ]]; then
         install_systemd
     else
-        warn "Skipping systemd/udev installation (--no-systemd)"
+        warn "Skipping systemd services installation (--no-systemd)"
     fi
 
     echo ""

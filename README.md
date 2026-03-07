@@ -35,7 +35,7 @@ and persist your settings across reboots — all from a single, zero-dependency 
 │  ↑↓ navigate  ←→ adjust  enter edit  p presets            │
 │  a apply  s save  r refresh  q quit                       │
 │                                                           │
-│  Persistence: enabled (systemd + udev)  ·  Config: 40/80 │
+│  Persistence: enabled (boot + resume)  ·  Config: 40/80  │
 └───────────────────────────────────────────────────────────┘
 ```
 
@@ -51,7 +51,7 @@ Tools like TLP are powerful but heavy and config-file-driven.
 - **Interactive TUI** — see battery health, adjust thresholds with arrow keys, pick presets
 - **Scriptable CLI** — `batctl set --stop 80` for automation and dotfiles
 - **14+ vendor backends** — from ThinkPad to Apple Silicon, with a generic fallback
-- **Persistence** — survives reboots and suspend/resume via systemd + udev
+- **Persistence** — survives reboots and suspend/resume via systemd
 
 ## Installation
 
@@ -140,7 +140,7 @@ sudo batctl set --preset max-lifespan
 # Apply thresholds from config (used by systemd on boot)
 sudo batctl apply
 
-# Enable persistence (systemd service + udev rule)
+# Enable persistence (systemd services: boot + resume)
 sudo batctl persist enable
 
 # Check persistence status
@@ -165,7 +165,7 @@ BAT0 (Sunwoda 5B10W51867)
   Thresholds: start=40% stop=80%
   Behaviour:  auto (available: auto, inhibit-charge, force-discharge)
 
-Persistence:  systemd=true  udev=true
+Persistence:  boot=true  resume=true
 ```
 
 ### Example: `batctl detect`
@@ -243,8 +243,8 @@ This installs:
 | Component | Path | Purpose |
 |-----------|------|---------|
 | Config file | `/etc/batctl.conf` | Stores your threshold values |
-| systemd service | `/etc/systemd/system/batctl.service` | Applies thresholds on boot |
-| udev rule | `/etc/udev/rules.d/99-batctl-resume.rules` | Restores thresholds after suspend |
+| Boot service | `/etc/systemd/system/batctl.service` | Applies thresholds on boot |
+| Resume service | `/etc/systemd/system/batctl-resume.service` | Restores thresholds after suspend/resume |
 
 To disable and remove everything:
 
@@ -260,7 +260,7 @@ batctl
 ├── Probes sysfs paths → confirms driver availability
 ├── Selects matching backend (or generic fallback)
 ├── Reads/writes /sys/class/power_supply/BAT*/charge_control_*
-└── Manages systemd + udev for persistence
+└── Manages systemd services for persistence
 ```
 
 All operations go through the kernel's standard sysfs interface.
@@ -274,10 +274,10 @@ batctl/
 ├── internal/
 │   ├── backend/         → 14 vendor backends + generic + auto-detection
 │   ├── battery/         → sysfs read/write helpers, battery info
-│   ├── persist/         → systemd service, udev rules, config file
+│   ├── persist/         → systemd services, config file
 │   ├── preset/          → built-in presets with hardware adaptation
 │   └── tui/             → bubbletea TUI (dashboard, presets, styles)
-├── configs/             → systemd + udev templates
+├── configs/             → systemd service templates
 ├── Makefile
 └── PKGBUILD             → Arch Linux package
 ```

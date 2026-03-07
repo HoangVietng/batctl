@@ -17,12 +17,12 @@ build:
 install: build
 	install -Dm755 $(BINARY) $(DESTDIR)$(BINDIR)/$(BINARY)
 	install -Dm644 configs/batctl.service $(DESTDIR)$(SYSCONFDIR)/systemd/system/batctl.service
-	install -Dm644 configs/99-batctl-resume.rules $(DESTDIR)$(SYSCONFDIR)/udev/rules.d/99-batctl-resume.rules
+	install -Dm644 configs/batctl-resume.service $(DESTDIR)$(SYSCONFDIR)/systemd/system/batctl-resume.service
 
 uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/$(BINARY)
 	rm -f $(DESTDIR)$(SYSCONFDIR)/systemd/system/batctl.service
-	rm -f $(DESTDIR)$(SYSCONFDIR)/udev/rules.d/99-batctl-resume.rules
+	rm -f $(DESTDIR)$(SYSCONFDIR)/systemd/system/batctl-resume.service
 	rm -f $(DESTDIR)$(SYSCONFDIR)/batctl.conf
 
 clean:

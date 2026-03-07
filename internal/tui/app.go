@@ -52,7 +52,7 @@ type model struct {
 	productName string
 	batInfo     battery.Info
 	persistSvc  bool
-	persistUdev bool
+	persistResume bool
 	persistCfg  *persist.Config
 }
 
@@ -125,7 +125,7 @@ func (m *model) refreshBatInfo() {
 
 func (m *model) refreshPersistStatus() {
 	m.persistSvc = persist.ServiceEnabled()
-	m.persistUdev = persist.UdevRuleInstalled()
+	m.persistResume = persist.ResumeServiceEnabled()
 	if cfg, err := persist.LoadConfig(); err == nil {
 		m.persistCfg = &cfg
 	} else {
@@ -337,11 +337,11 @@ func (m *model) applyAndSave() tea.Cmd {
 }
 
 func (m *model) togglePersist() tea.Cmd {
-	if m.persistSvc || m.persistUdev {
+	if m.persistSvc || m.persistResume {
 		if err := persist.RemoveService(); err != nil {
 			return m.setMessage(fmt.Sprintf("Error: %v", err), errorStyle)
 		}
-		if err := persist.RemoveUdevRule(); err != nil {
+		if err := persist.RemoveResumeService(); err != nil {
 			return m.setMessage(fmt.Sprintf("Error: %v", err), errorStyle)
 		}
 		m.refreshPersistStatus()
@@ -351,11 +351,11 @@ func (m *model) togglePersist() tea.Cmd {
 	if err := persist.InstallService(); err != nil {
 		return m.setMessage(fmt.Sprintf("Error: %v (try with sudo)", err), errorStyle)
 	}
-	if err := persist.InstallUdevRule(); err != nil {
+	if err := persist.InstallResumeService(); err != nil {
 		return m.setMessage(fmt.Sprintf("Error: %v", err), errorStyle)
 	}
 	m.refreshPersistStatus()
-	return m.setMessage("Persistence enabled (systemd + udev)", successStyle)
+	return m.setMessage("Persistence enabled (systemd)", successStyle)
 }
 
 func (m *model) setMessage(msg string, style lipgloss.Style) tea.Cmd {

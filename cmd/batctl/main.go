@@ -87,8 +87,8 @@ func statusCmd() *cobra.Command {
 				}
 			}
 
-			fmt.Printf("\nPersistence:  systemd=%v  udev=%v\n",
-				persist.ServiceEnabled(), persist.UdevRuleInstalled())
+			fmt.Printf("\nPersistence:  boot=%v  resume=%v\n",
+				persist.ServiceEnabled(), persist.ResumeServiceEnabled())
 
 			return nil
 		},
@@ -199,28 +199,28 @@ func persistCmd() *cobra.Command {
 				if err := persist.InstallService(); err != nil {
 					return fmt.Errorf("installing systemd service: %w", err)
 				}
-				if err := persist.InstallUdevRule(); err != nil {
-					return fmt.Errorf("installing udev rule: %w", err)
+				if err := persist.InstallResumeService(); err != nil {
+					return fmt.Errorf("installing resume service: %w", err)
 				}
 				fmt.Printf("Persistence enabled: start=%d%% stop=%d%% on %s\n", start, stop, bats[0])
-				fmt.Println("Systemd service and udev rule installed.")
+				fmt.Println("Systemd services installed (boot + resume).")
 				return nil
 
 			case "disable":
 				if err := persist.RemoveService(); err != nil {
 					return fmt.Errorf("removing systemd service: %w", err)
 				}
-				if err := persist.RemoveUdevRule(); err != nil {
-					return fmt.Errorf("removing udev rule: %w", err)
+				if err := persist.RemoveResumeService(); err != nil {
+					return fmt.Errorf("removing resume service: %w", err)
 				}
-				fmt.Println("Persistence disabled. Systemd service and udev rule removed.")
+				fmt.Println("Persistence disabled. Systemd services removed.")
 				return nil
 
 			case "status":
 				svc := persist.ServiceEnabled()
-				udev := persist.UdevRuleInstalled()
-				fmt.Printf("Systemd service: %s\n", enabledStr(svc))
-				fmt.Printf("Udev rule:       %s\n", enabledStr(udev))
+				resume := persist.ResumeServiceEnabled()
+				fmt.Printf("Boot service:    %s\n", enabledStr(svc))
+				fmt.Printf("Resume service:  %s\n", enabledStr(resume))
 				if cfg, err := persist.LoadConfig(); err == nil {
 					fmt.Printf("Config:          battery=%s start=%d%% stop=%d%%\n",
 						cfg.Battery, cfg.Start, cfg.Stop)

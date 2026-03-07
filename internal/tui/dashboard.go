@@ -205,8 +205,8 @@ func renderPersistRow(m model) string {
 	}
 
 	var status string
-	if m.persistSvc && m.persistUdev {
-		status = successStyle.Render("● enabled") + dimStyle.Render(" (systemd + udev)")
+	if m.persistSvc && m.persistResume {
+		status = successStyle.Render("● enabled") + dimStyle.Render(" (boot + resume)")
 	} else if m.persistSvc {
 		status = successStyle.Render("● enabled") + dimStyle.Render(" (systemd)")
 	} else {
