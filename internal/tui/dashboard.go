@@ -50,24 +50,16 @@ func renderDashboard(m model) string {
 
 		b.WriteString("\n")
 
-		start, stop, err := m.backend.GetThresholds(bat)
-		if err != nil {
-			b.WriteString("  " + errorStyle.Render(fmt.Sprintf("Thresholds: %v", err)) + "\n")
-		} else {
-			b.WriteString("  " + labelStyle.Render("Charge Thresholds") + "\n")
+		b.WriteString("  " + labelStyle.Render("Charge Thresholds") + "\n")
 
-			startLine := renderThresholdLine("Start", start, m.activeField == fieldStart && m.editMode, m.activeField == fieldStart)
-			stopLine := renderThresholdLine("Stop", stop, m.activeField == fieldStop && m.editMode, m.activeField == fieldStop)
-			b.WriteString(startLine + "\n")
-			b.WriteString(stopLine + "\n")
-		}
+		startLine := renderThresholdLine("Start", m.startVal, m.activeField == fieldStart && m.editMode, m.activeField == fieldStart)
+		stopLine := renderThresholdLine("Stop", m.stopVal, m.activeField == fieldStop && m.editMode, m.activeField == fieldStop)
+		b.WriteString(startLine + "\n")
+		b.WriteString(stopLine + "\n")
 
 		caps := m.backend.Capabilities()
 		if caps.ChargeBehaviour {
-			cur, avail, err := m.backend.GetChargeBehaviour(bat)
-			if err == nil {
-				b.WriteString(renderBehaviour(cur, avail, m.activeField == fieldBehaviour, m.editMode) + "\n")
-			}
+			b.WriteString(renderBehaviour(m.behaviourCur, m.behaviourOpts, m.activeField == fieldBehaviour, m.editMode) + "\n")
 		}
 		b.WriteString("\n")
 	}

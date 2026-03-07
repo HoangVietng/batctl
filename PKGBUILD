@@ -24,6 +24,7 @@ build() {
 package() {
     cd "${srcdir}/batctl-${pkgver}"
     install -Dm755 batctl "${pkgdir}/usr/bin/batctl"
-    install -Dm644 configs/batctl.service "${pkgdir}/etc/systemd/system/batctl.service"
-    install -Dm644 configs/99-batctl-resume.rules "${pkgdir}/etc/udev/rules.d/99-batctl-resume.rules"
+    install -Dm644 configs/batctl.service "${pkgdir}/usr/lib/systemd/system/batctl.service"
+    install -Dm644 configs/99-batctl-resume.rules "${pkgdir}/usr/lib/udev/rules.d/99-batctl-resume.rules"
+    install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }

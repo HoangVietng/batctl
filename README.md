@@ -1,99 +1,300 @@
-# batctl — Battery Charge Threshold Manager
+<p align="center">
+  <h1 align="center">⚡ batctl</h1>
+  <p align="center">
+    <strong>Battery charge threshold manager for Linux laptops</strong>
+  </p>
+  <p align="center">
+    <a href="#installation">Installation</a> •
+    <a href="#usage">Usage</a> •
+    <a href="#supported-hardware">Hardware</a> •
+    <a href="#presets">Presets</a> •
+    <a href="#persistence">Persistence</a>
+  </p>
+</p>
 
-TUI and CLI tool for managing battery charge thresholds on Linux laptops.
-Supports 14+ laptop vendors with automatic hardware detection.
+<br>
 
-## Supported Vendors
+**batctl** is a terminal UI and CLI tool that lets you control battery charge thresholds on Linux.
+Set start/stop charge levels to extend battery lifespan, choose from built-in presets,
+and persist your settings across reboots — all from a single, zero-dependency binary.
 
-| Vendor | Start | Stop | Charge Behaviour | Driver |
-|--------|-------|------|-------------------|--------|
-| ThinkPad | 0–99 | 1–100 | Yes | thinkpad_acpi |
-| ASUS | — | 0–100 | — | asus_wmi |
-| Dell | 50–95 | 55–100 | — | dell_laptop |
-| Lenovo IdeaPad | — | on/off | — | ideapad_laptop |
-| Samsung | — | 80/100 | — | samsung_laptop |
-| LG | — | 80/100 | — | lg_laptop |
-| Huawei | 0–99 | 1–100 | — | huawei_wmi |
-| MSI | auto | 10–100 | — | msi_ec |
-| Framework | 0–99* | 1–100 | Yes | cros_charge-control |
-| System76 | 0–99 | 1–100 | — | system76_acpi |
-| Sony | — | 50/80/100 | — | sony_laptop |
-| Toshiba | — | 80/100 | — | toshiba_acpi |
-| Tuxedo | discrete | discrete | — | clevo_acpi |
-| Apple Silicon | auto | 80/100 | — | macsmc_power |
-| Generic | 0–99* | 1–100* | Yes* | any with sysfs |
+```
+┌─ batctl ── Battery Charge Manager ───────────────────────┐
+│                                                           │
+│  ThinkPad T14 Gen 3  ·  thinkpad_acpi                    │
+│                                                           │
+│  BAT0                                                     │
+│  ███████████████████████████░░░  85%  ⚡ Charging         │
+│  Health: 92%  ·  Cycles: 54  ·  48.3 / 52.8 Wh           │
+│                                                           │
+│  Charge Thresholds                                        │
+│  ▸ Start: ◄────────●───────────────────► 40%              │
+│    Stop:  ◄──────────────────●─────────► 80%              │
+│    Behaviour: [auto] inhibit-charge force-discharge       │
+│                                                           │
+│  ↑↓ navigate  ←→ adjust  enter edit  p presets            │
+│  a apply  s save  r refresh  q quit                       │
+│                                                           │
+│  Persistence: enabled (systemd + udev)  ·  Config: 40/80 │
+└───────────────────────────────────────────────────────────┘
+```
+
+## Why batctl?
+
+Most laptops support charge thresholds in hardware, but the Linux interface is fragmented:
+each vendor exposes different sysfs paths, value ranges, and quirks.
+Tools like TLP are powerful but heavy and config-file-driven.
+
+**batctl** gives you:
+
+- **One binary, zero config** — auto-detects your hardware and shows what's possible
+- **Interactive TUI** — see battery health, adjust thresholds with arrow keys, pick presets
+- **Scriptable CLI** — `batctl set --stop 80` for automation and dotfiles
+- **14+ vendor backends** — from ThinkPad to Apple Silicon, with a generic fallback
+- **Persistence** — survives reboots and suspend/resume via systemd + udev
 
 ## Installation
 
 ### From source
 
 ```bash
+git clone https://github.com/spaceclam/batctl.git
+cd batctl
 make
 sudo make install
 ```
 
-### Arch Linux (AUR)
+### Arch Linux / Omarchy (AUR)
 
 ```bash
-# Manual
-makepkg -si
-
-# Or with an AUR helper
 yay -S batctl-tui
+```
+
+Or manually:
+
+```bash
+makepkg -si
+```
+
+### Pre-built binary
+
+Download from [Releases](https://github.com/spaceclam/batctl/releases), then:
+
+```bash
+chmod +x batctl
+sudo cp batctl /usr/bin/
 ```
 
 ## Usage
 
-### TUI (interactive)
+### Interactive TUI
+
+Launch the full terminal interface (requires root for write operations):
 
 ```bash
 sudo batctl
 ```
 
-### CLI
+**Controls:**
+
+| Key | Action |
+|-----|--------|
+| `↑` `↓` / `j` `k` | Navigate between fields |
+| `←` `→` / `h` `l` | Adjust value (±1) |
+| `H` `L` | Adjust value (±5) |
+| `Enter` | Toggle edit mode |
+| `Esc` | Cancel edit |
+| `p` | Open preset picker |
+| `a` | Apply current thresholds |
+| `s` | Save config + enable persistence |
+| `r` | Refresh battery info |
+| `q` | Quit |
+
+### CLI Commands
 
 ```bash
-# Show battery status and current thresholds
+# Show battery info, thresholds, and persistence status
 batctl status
 
-# Set thresholds
-sudo batctl set --start 40 --stop 80
-
-# Apply a preset
-sudo batctl set --preset max-lifespan
-
-# Detect hardware
+# Detect hardware and show capabilities
 batctl detect
 
-# Enable persistence (survives reboot + suspend)
+# Set thresholds directly
+sudo batctl set --start 40 --stop 80
+
+# Apply a built-in preset
+sudo batctl set --preset max-lifespan
+
+# Apply thresholds from config (used by systemd on boot)
+sudo batctl apply
+
+# Enable persistence (systemd service + udev rule)
 sudo batctl persist enable
 
 # Check persistence status
 batctl persist status
 
-# Disable persistence
+# Disable persistence and clean up
 sudo batctl persist disable
+```
+
+### Example: `batctl status`
+
+```
+Backend: ThinkPad
+
+BAT0 (Sunwoda 5B10W51867)
+  Status:     Charging
+  Capacity:   85%
+  Health:     103.6%
+  Cycles:     54
+  Energy:     48.3 / 52.8 Wh (design: 51.0 Wh)
+  Power:      20.1 W
+  Thresholds: start=40% stop=80%
+  Behaviour:  auto (available: auto, inhibit-charge, force-discharge)
+
+Persistence:  systemd=true  udev=true
+```
+
+### Example: `batctl detect`
+
+```
+Vendor:  LENOVO
+Product: 21AH00FGRT
+Backend: ThinkPad
+Capabilities:
+  Start threshold:    true (range: 0..99)
+  Stop threshold:     true (range: 1..100)
+  Charge behaviour:   true
+Batteries: [BAT0]
 ```
 
 ## Presets
 
-| Preset | Start | Stop | Use Case |
-|--------|-------|------|----------|
-| max-lifespan | 20% | 80% | Best for battery longevity |
-| balanced | 40% | 80% | Good balance |
-| full-charge | 0% | 100% | No restrictions |
-| plugged-in | 70% | 80% | Mostly plugged in |
+Built-in presets adapt automatically to your hardware's supported value ranges:
 
-Presets are automatically adapted to your hardware's capabilities.
+| Preset | Start | Stop | Description |
+|--------|------:|-----:|-------------|
+| `max-lifespan` | 20% | 80% | Best for battery longevity. Ideal if you're mostly plugged in. |
+| `balanced` | 40% | 80% | Good mix of available capacity and long-term health. |
+| `plugged-in` | 70% | 80% | Narrow band for always-connected workstations. |
+| `full-charge` | 0% | 100% | No restrictions. Use when you need maximum runtime. |
+
+```bash
+sudo batctl set --preset balanced
+```
+
+> On hardware with limited options (e.g. Samsung with only 80/100),
+> presets snap to the nearest supported value.
+
+## Supported Hardware
+
+batctl auto-detects your laptop vendor via DMI and probes sysfs for the right driver.
+If no specific backend matches, the **generic fallback** is used for any laptop
+exposing standard `charge_control_{start,end}_threshold` files.
+
+| Vendor | Start | Stop | Behaviour | Kernel Driver |
+|--------|:-----:|:----:|:---------:|---------------|
+| **Lenovo ThinkPad** | 0–99 | 1–100 | ✓ | `thinkpad_acpi` |
+| **ASUS** | — | 0–100¹ | — | `asus_wmi` |
+| **Dell** | 50–95 | 55–100 | — | `dell_laptop` |
+| **Lenovo IdeaPad** | — | on/off² | — | `ideapad_laptop` |
+| **Huawei MateBook** | 0–99 | 1–100 | — | `huawei_wmi` |
+| **Samsung** | — | 80 or 100 | — | `samsung_laptop` |
+| **LG Gram** | — | 80 or 100 | — | `lg_laptop` |
+| **MSI** | auto³ | 10–100 | — | `msi_ec` |
+| **Framework** | 0–99⁴ | 1–100 | ✓ | `cros_charge-control` |
+| **System76** | 0–99 | 1–100 | — | `system76_acpi` |
+| **Sony VAIO** | — | 50/80/100 | — | `sony_laptop` |
+| **Toshiba/Dynabook** | — | 80 or 100 | — | `toshiba_acpi` |
+| **Tuxedo (Clevo)** | discrete⁵ | discrete⁵ | — | `clevo_acpi` |
+| **Apple Silicon** | auto³ | 80 or 100 | — | `macsmc_power` |
+| **Generic fallback** | 0–99 | 1–100 | ✓ | any sysfs |
+
+<sup>¹ Some ASUS models only accept 40, 60, or 80</sup><br>
+<sup>² Conservation mode: fixed threshold (usually 60%)</sup><br>
+<sup>³ Start threshold is computed by hardware from stop value</sup><br>
+<sup>⁴ Start threshold requires EC firmware v3</sup><br>
+<sup>⁵ Tuxedo start: 40/50/60/70/80/95 — stop: 60/70/80/90/100</sup>
 
 ## Persistence
 
-When enabled via `batctl persist enable`:
-- A systemd service applies thresholds on boot
-- A udev rule restores thresholds after resume from suspend
-- Config stored in `/etc/batctl.conf`
+By default, charge thresholds reset on reboot or resume from suspend.
+batctl solves this with a one-command setup:
+
+```bash
+sudo batctl persist enable
+```
+
+This installs:
+
+| Component | Path | Purpose |
+|-----------|------|---------|
+| Config file | `/etc/batctl.conf` | Stores your threshold values |
+| systemd service | `/etc/systemd/system/batctl.service` | Applies thresholds on boot |
+| udev rule | `/etc/udev/rules.d/99-batctl-resume.rules` | Restores thresholds after suspend |
+
+To disable and remove everything:
+
+```bash
+sudo batctl persist disable
+```
+
+## How It Works
+
+```
+batctl
+├── Reads /sys/class/dmi/id/sys_vendor → identifies laptop vendor
+├── Probes sysfs paths → confirms driver availability
+├── Selects matching backend (or generic fallback)
+├── Reads/writes /sys/class/power_supply/BAT*/charge_control_*
+└── Manages systemd + udev for persistence
+```
+
+All operations go through the kernel's standard sysfs interface.
+No direct hardware access, no custom kernel modules required.
+
+## Architecture
+
+```
+batctl/
+├── cmd/batctl/          → CLI entry point (cobra)
+├── internal/
+│   ├── backend/         → 14 vendor backends + generic + auto-detection
+│   ├── battery/         → sysfs read/write helpers, battery info
+│   ├── persist/         → systemd service, udev rules, config file
+│   ├── preset/          → built-in presets with hardware adaptation
+│   └── tui/             → bubbletea TUI (dashboard, presets, styles)
+├── configs/             → systemd + udev templates
+├── Makefile
+└── PKGBUILD             → Arch Linux package
+```
 
 ## Requirements
 
-- Linux kernel with appropriate vendor driver
-- Root access for writing thresholds
+- **Linux** with a kernel that includes your laptop's battery driver
+- **Root access** (`sudo`) for writing thresholds and managing persistence
+- No runtime dependencies — single static binary
+
+## Contributing
+
+Contributions are welcome! Areas where help is especially appreciated:
+
+- **New vendor backends** — if your laptop isn't detected, check `batctl detect` output and open a PR
+- **Testing** — try batctl on your hardware and report what works
+- **Packaging** — help with Fedora, Debian, NixOS packages
+
+## Donate
+
+If batctl saved your battery some cycles, consider buying me a coffee in crypto:
+
+| Currency | Network | Address |
+|----------|---------|---------|
+| **BTC** | Bitcoin | `your-btc-address` |
+| **ETH** | Ethereum | `your-eth-address` |
+| **USDT** | TRC-20 | `your-trc20-address` |
+| **TON** | TON | `your-ton-address` |
+
+## License
+
+MIT
