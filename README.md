@@ -18,26 +18,9 @@
 Set start/stop charge levels to extend battery lifespan, choose from built-in presets,
 and persist your settings across reboots — all from a single, zero-dependency binary.
 
-```
-┌─ batctl ── Battery Charge Manager ───────────────────────┐
-│                                                           │
-│  ThinkPad T14 Gen 3  ·  thinkpad_acpi                    │
-│                                                           │
-│  BAT0                                                     │
-│  ███████████████████████████░░░  85%  ⚡ Charging         │
-│  Health: 92%  ·  Cycles: 54  ·  48.3 / 52.8 Wh           │
-│                                                           │
-│  Charge Thresholds                                        │
-│  ▸ Start: ◄────────●───────────────────► 40%              │
-│    Stop:  ◄──────────────────●─────────► 80%              │
-│    Behaviour: [auto] inhibit-charge force-discharge       │
-│                                                           │
-│  ↑↓ navigate  ←→ adjust  enter edit  p presets            │
-│  a apply  s save  r refresh  q quit                       │
-│                                                           │
-│  Persistence: enabled (boot + resume)  ·  Config: 40/80  │
-└───────────────────────────────────────────────────────────┘
-```
+<p align="center">
+  <img src="demo.gif" alt="batctl demo" width="800">
+</p>
 
 ## Why batctl?
 
