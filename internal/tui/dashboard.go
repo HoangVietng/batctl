@@ -56,13 +56,20 @@ func renderDashboard(m model) string {
 
 	// Presets
 	b.WriteString("  " + labelStyle.Render("Presets") + "\n")
-	b.WriteString(renderPresetRow(m.presetIdx, m.activeField == fieldPreset) + "\n")
+	b.WriteString(renderPresetRow(m.presetIdx, m.activeField == fieldPreset, m.startVal, m.stopVal) + "\n")
 
 	b.WriteString("\n")
 
 	// Persistence
 	b.WriteString("  " + labelStyle.Render("Persistence") + "\n")
 	b.WriteString(renderPersistRow(m) + "\n")
+
+	b.WriteString("\n")
+
+	if m.dirty {
+		b.WriteString("  " + accentStyle.Render("● Unsaved changes") +
+			dimStyle.Render("  press 'a' to apply & save") + "\n")
+	}
 
 	b.WriteString("\n")
 
@@ -158,17 +165,27 @@ func renderBehaviour(current string, available []string, focused bool) string {
 	return prefix + "Behaviour: " + strings.Join(parts, " ")
 }
 
-func renderPresetRow(activeIdx int, focused bool) string {
+func renderPresetRow(activeIdx int, focused bool, startVal, stopVal int) string {
+	matchIdx := -1
+	for i, p := range preset.Presets {
+		if p.Start == startVal && p.Stop == stopVal {
+			matchIdx = i
+			break
+		}
+	}
+
 	var parts []string
 	for i, p := range preset.Presets {
 		label := fmt.Sprintf("%s (%d–%d)", p.Name, p.Start, p.Stop)
-		if i == activeIdx {
-			if focused {
-				parts = append(parts, selectedStyle.Render("["+label+"]"))
-			} else {
-				parts = append(parts, accentStyle.Render("["+label+"]"))
-			}
-		} else {
+		isNavigated := i == activeIdx && focused
+		isMatched := i == matchIdx
+
+		switch {
+		case isNavigated:
+			parts = append(parts, selectedStyle.Render("["+label+"]"))
+		case isMatched:
+			parts = append(parts, accentStyle.Render("["+label+"]"))
+		default:
 			parts = append(parts, dimStyle.Render(label))
 		}
 	}

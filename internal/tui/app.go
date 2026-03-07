@@ -42,6 +42,7 @@ type model struct {
 	behaviourOpts []string
 	behaviourCur  string
 	presetIdx     int
+	dirty         bool
 	message       string
 	messageStyle  lipgloss.Style
 	width         int
@@ -93,6 +94,7 @@ func (m *model) refreshThresholds() {
 	if err == nil {
 		m.startVal = start
 		m.stopVal = stop
+		m.dirty = false
 	}
 
 	caps := m.backend.Capabilities()
@@ -195,6 +197,7 @@ func (m *model) handleEnter() tea.Cmd {
 		}
 		m.startVal = start
 		m.stopVal = stop
+		m.dirty = true
 		return m.setMessage(fmt.Sprintf("Preset %q: %d%%–%d%% (press 'a' to apply)", p.Name, start, stop), successStyle)
 	case fieldPersist:
 		return m.togglePersist()
@@ -263,6 +266,7 @@ func (m *model) adjustValue(delta int) {
 		if !caps.StartThreshold {
 			return
 		}
+		m.dirty = true
 		m.startVal += delta
 		if m.startVal < caps.StartRange[0] {
 			m.startVal = caps.StartRange[0]
@@ -275,6 +279,7 @@ func (m *model) adjustValue(delta int) {
 		}
 
 	case fieldStop:
+		m.dirty = true
 		if len(caps.DiscreteStopVals) > 0 {
 			m.stopVal = nextDiscrete(m.stopVal, delta, caps.DiscreteStopVals)
 		} else {
@@ -288,6 +293,7 @@ func (m *model) adjustValue(delta int) {
 		}
 
 	case fieldBehaviour:
+		m.dirty = true
 		if len(m.behaviourOpts) > 0 {
 			m.behaviourIdx += delta
 			if m.behaviourIdx < 0 {
@@ -324,6 +330,7 @@ func (m *model) applyAndSave() tea.Cmd {
 		return m.setMessage(fmt.Sprintf("Applied %d/%d (config save failed: %v)", m.startVal, m.stopVal, errorStyle), errorStyle)
 	}
 
+	m.dirty = false
 	m.refreshBatInfo()
 	m.refreshPersistStatus()
 	return m.setMessage(fmt.Sprintf("Applied & saved: %d%%–%d%%", m.startVal, m.stopVal), successStyle)
