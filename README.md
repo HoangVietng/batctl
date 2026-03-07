@@ -55,6 +55,18 @@ Tools like TLP are powerful but heavy and config-file-driven.
 
 ## Installation
 
+### Quick install (any distro)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/spaceclam/batctl/master/install.sh | sudo bash
+```
+
+To uninstall:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/spaceclam/batctl/master/install.sh | sudo bash -s -- --uninstall
+```
+
 ### From source
 
 ```bash

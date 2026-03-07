@@ -59,6 +59,9 @@ jobs:
             ## Installation
 
             ```bash
+            # Quick install (any distro)
+            curl -fsSL https://raw.githubusercontent.com/spaceclam/batctl/master/install.sh | sudo bash
+
             # Arch Linux (AUR)
             yay -S batctl-tui
 

@@ -13,40 +13,39 @@ import (
 	"github.com/spaceclam/batctl/internal/preset"
 )
 
-type view int
-
-const (
-	viewDashboard view = iota
-	viewPresets
-)
-
 type field int
 
 const (
 	fieldStart field = iota
 	fieldStop
 	fieldBehaviour
+	fieldPreset
+	fieldPersist
 )
 
 type model struct {
-	backend      backend.Backend
-	batteries    []string
-	activeView   view
-	activeField  field
-	editMode     bool
-	startVal     int
-	stopVal      int
-	behaviourIdx int
+	backend       backend.Backend
+	batteries     []string
+	activeField   field
+	editMode      bool
+	startVal      int
+	stopVal       int
+	behaviourIdx  int
 	behaviourOpts []string
-	behaviourCur string
-	presetIdx    int
-	message      string
-	messageStyle lipgloss.Style
-	width        int
-	height       int
-}
+	behaviourCur  string
+	presetIdx     int
+	message       string
+	messageStyle  lipgloss.Style
+	width         int
+	height        int
 
-type refreshMsg struct{}
+	vendorName  string
+	productName string
+	batInfo     battery.Info
+	persistSvc  bool
+	persistUdev bool
+	persistCfg  *persist.Config
+}
 
 func initialModel() (model, error) {
 	b, err := backend.Detect()
@@ -62,13 +61,20 @@ func initialModel() (model, error) {
 	m := model{
 		backend:      b,
 		batteries:    bats,
-		activeView:   viewDashboard,
 		activeField:  fieldStart,
 		messageStyle: dimStyle,
+		vendorName:   backend.DetectVendor(),
+		productName:  backend.DetectProductName(),
 	}
 
-	m.refreshThresholds()
+	m.refreshAll()
 	return m, nil
+}
+
+func (m *model) refreshAll() {
+	m.refreshThresholds()
+	m.refreshBatInfo()
+	m.refreshPersistStatus()
 }
 
 func (m *model) refreshThresholds() {
@@ -97,6 +103,26 @@ func (m *model) refreshThresholds() {
 	}
 }
 
+func (m *model) refreshBatInfo() {
+	if len(m.batteries) == 0 {
+		return
+	}
+	info, err := battery.ReadInfo(m.batteries[0])
+	if err == nil {
+		m.batInfo = info
+	}
+}
+
+func (m *model) refreshPersistStatus() {
+	m.persistSvc = persist.ServiceEnabled()
+	m.persistUdev = persist.UdevRuleInstalled()
+	if cfg, err := persist.LoadConfig(); err == nil {
+		m.persistCfg = &cfg
+	} else {
+		m.persistCfg = nil
+	}
+}
+
 func (m model) Init() tea.Cmd {
 	return nil
 }
@@ -106,111 +132,75 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-
+		return m, nil
 	case tea.KeyMsg:
-		switch m.activeView {
-		case viewDashboard:
-			return m.updateDashboard(msg)
-		case viewPresets:
-			return m.updatePresets(msg)
-		}
+		return m.handleKey(msg)
 	}
 	return m, nil
 }
 
-func (m model) updateDashboard(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	key := msg.String()
 
-	switch key {
-	case "q", "ctrl+c":
+	if key == "q" || key == "ctrl+c" {
 		return m, tea.Quit
+	}
 
-	case "up", "k":
-		if !m.editMode {
-			m.prevField()
-		}
-
-	case "down", "j":
-		if !m.editMode {
-			m.nextField()
-		}
-
-	case "enter":
-		m.editMode = !m.editMode
-
-	case "esc":
+	if key == "esc" {
 		if m.editMode {
 			m.editMode = false
 			m.refreshThresholds()
 		}
+		return m, nil
+	}
 
-	case "left", "h":
-		if m.editMode {
+	if key == "enter" {
+		return m.handleEnter()
+	}
+
+	if m.editMode {
+		switch key {
+		case "left", "h":
 			m.adjustValue(-1)
-		}
-
-	case "right", "l":
-		if m.editMode {
+		case "right", "l":
 			m.adjustValue(1)
-		}
-
-	case "H":
-		if m.editMode {
+		case "H":
 			m.adjustValue(-5)
-		}
-
-	case "L":
-		if m.editMode {
+		case "L":
 			m.adjustValue(5)
 		}
+		return m, nil
+	}
 
-	case "p":
-		if !m.editMode {
-			m.activeView = viewPresets
-			m.presetIdx = 0
-		}
-
+	switch key {
+	case "up", "k":
+		m.prevField()
+	case "down", "j":
+		m.nextField()
+	case "left", "h":
+		m.adjustFieldChoice(-1)
+	case "right", "l":
+		m.adjustFieldChoice(1)
 	case "a":
-		if !m.editMode {
-			m.applyThresholds()
-		}
-
+		m.applyThresholds()
 	case "s":
-		if !m.editMode {
-			m.saveAndPersist()
-		}
-
+		m.saveAndPersist()
 	case "r":
-		if !m.editMode {
-			m.refreshThresholds()
-			m.setMessage("Refreshed", successStyle)
-		}
+		m.refreshAll()
+		m.setMessage("Refreshed", successStyle)
 	}
 
 	return m, nil
 }
 
-func (m model) updatePresets(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	key := msg.String()
-
-	switch key {
-	case "q", "ctrl+c":
-		return m, tea.Quit
-
-	case "esc":
-		m.activeView = viewDashboard
-
-	case "up", "k":
-		if m.presetIdx > 0 {
-			m.presetIdx--
+func (m model) handleEnter() (tea.Model, tea.Cmd) {
+	switch m.activeField {
+	case fieldStart, fieldStop, fieldBehaviour:
+		m.editMode = !m.editMode
+		if m.editMode {
+			m.message = ""
 		}
-
-	case "down", "j":
-		if m.presetIdx < len(preset.Presets)-1 {
-			m.presetIdx++
-		}
-
-	case "enter":
+	case fieldPreset:
 		p := preset.Presets[m.presetIdx]
 		start, stop, err := preset.AdaptToBackend(p, m.backend)
 		if err != nil {
@@ -218,12 +208,27 @@ func (m model) updatePresets(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		} else {
 			m.startVal = start
 			m.stopVal = stop
-			m.setMessage(fmt.Sprintf("Preset %q loaded: %d%%–%d%% (press 'a' to apply)", p.Name, start, stop), successStyle)
+			m.setMessage(fmt.Sprintf("Preset %q: %d%%–%d%% (press 'a' to apply)", p.Name, start, stop), successStyle)
 		}
-		m.activeView = viewDashboard
+	case fieldPersist:
+		m.togglePersist()
 	}
-
 	return m, nil
+}
+
+func (m *model) adjustFieldChoice(delta int) {
+	switch m.activeField {
+	case fieldPreset:
+		m.presetIdx += delta
+		if m.presetIdx < 0 {
+			m.presetIdx = len(preset.Presets) - 1
+		}
+		if m.presetIdx >= len(preset.Presets) {
+			m.presetIdx = 0
+		}
+	case fieldStart, fieldStop, fieldBehaviour:
+		m.adjustValue(delta)
+	}
 }
 
 func (m *model) prevField() {
@@ -235,6 +240,14 @@ func (m *model) prevField() {
 		}
 	case fieldBehaviour:
 		m.activeField = fieldStop
+	case fieldPreset:
+		if caps.ChargeBehaviour && len(m.behaviourOpts) > 0 {
+			m.activeField = fieldBehaviour
+		} else {
+			m.activeField = fieldStop
+		}
+	case fieldPersist:
+		m.activeField = fieldPreset
 	}
 }
 
@@ -244,9 +257,15 @@ func (m *model) nextField() {
 	case fieldStart:
 		m.activeField = fieldStop
 	case fieldStop:
-		if caps.ChargeBehaviour {
+		if caps.ChargeBehaviour && len(m.behaviourOpts) > 0 {
 			m.activeField = fieldBehaviour
+		} else {
+			m.activeField = fieldPreset
 		}
+	case fieldBehaviour:
+		m.activeField = fieldPreset
+	case fieldPreset:
+		m.activeField = fieldPersist
 	}
 }
 
@@ -315,6 +334,7 @@ func (m *model) applyThresholds() {
 		}
 	}
 
+	m.refreshBatInfo()
 	m.setMessage(fmt.Sprintf("Applied: start=%d%% stop=%d%%", m.startVal, m.stopVal), successStyle)
 }
 
@@ -331,16 +351,34 @@ func (m *model) saveAndPersist() {
 	}
 
 	if err := persist.InstallService(); err != nil {
-		m.setMessage(fmt.Sprintf("Service install error: %v (try with sudo)", err), errorStyle)
+		m.setMessage(fmt.Sprintf("Service error: %v (try with sudo)", err), errorStyle)
 		return
 	}
 
 	if err := persist.InstallUdevRule(); err != nil {
-		m.setMessage(fmt.Sprintf("Udev rule error: %v", err), errorStyle)
+		m.setMessage(fmt.Sprintf("Udev error: %v", err), errorStyle)
 		return
 	}
 
+	m.refreshPersistStatus()
 	m.setMessage(fmt.Sprintf("Saved & persistence enabled: %d%%–%d%%", m.startVal, m.stopVal), successStyle)
+}
+
+func (m *model) togglePersist() {
+	if m.persistSvc || m.persistUdev {
+		if err := persist.RemoveService(); err != nil {
+			m.setMessage(fmt.Sprintf("Error: %v", err), errorStyle)
+			return
+		}
+		if err := persist.RemoveUdevRule(); err != nil {
+			m.setMessage(fmt.Sprintf("Error: %v", err), errorStyle)
+			return
+		}
+		m.refreshPersistStatus()
+		m.setMessage("Persistence disabled", dimStyle)
+	} else {
+		m.saveAndPersist()
+	}
 }
 
 func (m *model) setMessage(msg string, style lipgloss.Style) {
@@ -349,12 +387,7 @@ func (m *model) setMessage(msg string, style lipgloss.Style) {
 }
 
 func (m model) View() string {
-	switch m.activeView {
-	case viewPresets:
-		return renderPresetPicker(m)
-	default:
-		return renderDashboard(m)
-	}
+	return renderDashboard(m)
 }
 
 func nextDiscrete(current, direction int, vals []int) int {
