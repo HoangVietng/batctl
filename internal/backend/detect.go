@@ -23,6 +23,7 @@ func init() {
 	Register(&SamsungBackend{})
 	Register(&LGBackend{})
 	Register(&MSIBackend{})
+	Register(&AcerBackend{})
 	Register(&FrameworkBackend{})
 	Register(&System76Backend{})
 	Register(&SonyBackend{})
