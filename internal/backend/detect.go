@@ -20,27 +20,40 @@ type vendorHint struct {
 }
 
 var vendorHints = []vendorHint{
-	{"LENOVO", "Hint: try loading the kernel module:\n" +
+	{"LENOVO", "Hint: try loading the kernel module (included in kernel):\n" +
 		"      ThinkPad:       sudo modprobe thinkpad_acpi\n" +
 		"      IdeaPad/Yoga:   sudo modprobe ideapad_laptop"},
-	{"ASUSTeK", "Hint: try loading the kernel module: sudo modprobe asus-nb-wmi"},
-	{"Dell", "Hint: try loading the kernel module: sudo modprobe dell-laptop"},
-	{"HUAWEI", "Hint: try loading the kernel module: sudo modprobe huawei-wmi"},
-	{"SAMSUNG", "Hint: try loading the kernel module: sudo modprobe samsung-laptop"},
-	{"LG", "Hint: try loading the kernel module: sudo modprobe lg-laptop"},
-	{"Micro-Star", "Hint: try loading the kernel module: sudo modprobe msi-ec\n" +
-		"      Requires kernel 6.4+. On older kernels install msi-ec-dkms."},
-	{"Acer", "Hint: this backend requires the acer-wmi-battery module (not in mainline kernel).\n" +
+	{"ASUSTeK", "Hint: try loading the kernel module (included in kernel):\n" +
+		"      sudo modprobe asus-nb-wmi"},
+	{"Dell", "Hint: try loading the kernel module (included in kernel):\n" +
+		"      sudo modprobe dell-laptop"},
+	{"HUAWEI", "Hint: try loading the kernel module (included in kernel):\n" +
+		"      sudo modprobe huawei-wmi"},
+	{"SAMSUNG", "Hint: try loading the kernel module (included in kernel):\n" +
+		"      sudo modprobe samsung-laptop"},
+	{"LG", "Hint: try loading the kernel module (included in kernel):\n" +
+		"      sudo modprobe lg-laptop"},
+	{"Micro-Star", "Hint: try loading the kernel module (included in kernel 6.4+):\n" +
+		"      sudo modprobe msi-ec\n" +
+		"      On older kernels: yay -S msi-ec-dkms"},
+	{"Acer", "Hint: this backend requires a separate kernel module (not in mainline).\n" +
 		"      On Arch: yay -S acer-wmi-battery-dkms && sudo modprobe acer-wmi-battery"},
-	{"Framework", "Hint: try loading the kernel module: sudo modprobe cros_ec_lpcs"},
-	{"System76", "Hint: try loading the kernel module: sudo modprobe system76_acpi"},
-	{"Sony", "Hint: try loading the kernel module: sudo modprobe sony-laptop"},
-	{"TOSHIBA", "Hint: try loading the kernel module: sudo modprobe toshiba_acpi"},
-	{"Dynabook", "Hint: try loading the kernel module: sudo modprobe toshiba_acpi"},
-	{"TUXEDO", "Hint: this backend requires tuxedo-drivers (not in mainline kernel).\n" +
-		"      See: https://github.com/tuxedocomputers/tuxedo-drivers"},
-	{"Apple", "Hint: try loading the kernel module: sudo modprobe macsmc-battery\n" +
-		"      Requires Asahi Linux kernel."},
+	{"Framework", "Hint: try loading the kernel module (included in kernel):\n" +
+		"      sudo modprobe cros_ec_lpcs"},
+	{"System76", "Hint: try loading the kernel module (included in kernel):\n" +
+		"      sudo modprobe system76_acpi\n" +
+		"      Or install from AUR: yay -S system76-acpi-dkms"},
+	{"Sony", "Hint: try loading the kernel module (included in kernel):\n" +
+		"      sudo modprobe sony-laptop"},
+	{"TOSHIBA", "Hint: try loading the kernel module (included in kernel):\n" +
+		"      sudo modprobe toshiba_acpi"},
+	{"Dynabook", "Hint: try loading the kernel module (included in kernel):\n" +
+		"      sudo modprobe toshiba_acpi"},
+	{"TUXEDO", "Hint: this backend requires a separate kernel module (not in mainline).\n" +
+		"      On Arch: yay -S tuxedo-drivers-dkms && sudo modprobe tuxedo_keyboard"},
+	{"Apple", "Hint: try loading the kernel module:\n" +
+		"      Apple Silicon: sudo modprobe macsmc-battery (requires Asahi Linux kernel)\n" +
+		"      Intel Mac:     apply applesmc-next patches (see github.com/c---/applesmc-next)"},
 }
 
 func DetectHint() string {
