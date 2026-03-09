@@ -25,6 +25,15 @@ func (b *LenovoIdeaPadBackend) Detect() bool {
 	if strings.Contains(product, "ThinkPad") {
 		return false
 	}
+
+	// If standard charge_control thresholds exist (e.g. Legion models),
+	// let the Generic backend handle it for finer threshold control.
+	for _, bat := range battery.ListBatteries() {
+		if battery.SysfsExists(battery.BatPath(bat, "charge_control_end_threshold")) {
+			return false
+		}
+	}
+
 	matches, err := filepath.Glob("/sys/bus/platform/drivers/ideapad_acpi/VPC*/conservation_mode")
 	if err != nil || len(matches) == 0 {
 		return false
