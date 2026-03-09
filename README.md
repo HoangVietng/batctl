@@ -274,6 +274,10 @@ batctl/
 - **Root access** (`sudo`) for writing thresholds and managing persistence
 - No runtime dependencies — single static binary
 
+## Community Projects
+
+- **[threshpad](https://github.com/looselyhuman/threshpad)** — GNOME Shell extension for batctl with dual-battery support (ThinkPad)
+
 ## Contributing
 
 Contributions are welcome! Areas where help is especially appreciated:
