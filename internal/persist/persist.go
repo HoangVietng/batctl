@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const ConfigPath = "/etc/batctl.conf"
+var ConfigPath = "/etc/batctl.conf"
 
 type Config struct {
 	Battery string

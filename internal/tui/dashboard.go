@@ -25,18 +25,22 @@ func renderDashboard(m model) string {
 	}
 
 	// Battery info
-	info := m.batInfo
-	b.WriteString("  " + accentStyle.Render(info.Name) + "\n")
-	b.WriteString("  " + renderGauge(info.Capacity, 30) + "  " +
-		valueStyle.Render(fmt.Sprintf("%d%%", info.Capacity)) + "  " +
-		renderStatus(info.Status) + "\n")
+	for i, info := range m.batInfos {
+		b.WriteString("  " + accentStyle.Render(info.Name) + "\n")
+		b.WriteString("  " + renderGauge(info.Capacity, 30) + "  " +
+			valueStyle.Render(fmt.Sprintf("%d%%", info.Capacity)) + "  " +
+			renderStatus(info.Status) + "\n")
 
-	healthStr := fmt.Sprintf("%.1f%%", info.HealthPercent)
-	energyStr := fmt.Sprintf("%.1f / %.1f Wh", info.EnergyNow, info.EnergyFull)
-	b.WriteString("  " + dimStyle.Render(fmt.Sprintf("Health: %s  ·  Cycles: %d  ·  %s",
-		healthStr, info.CycleCount, energyStr)) + "\n")
-	if info.PowerNow > 0 {
-		b.WriteString("  " + dimStyle.Render(fmt.Sprintf("Power: %.1f W", info.PowerNow)) + "\n")
+		healthStr := fmt.Sprintf("%.1f%%", info.HealthPercent)
+		energyStr := fmt.Sprintf("%.1f / %.1f Wh", info.EnergyNow, info.EnergyFull)
+		b.WriteString("  " + dimStyle.Render(fmt.Sprintf("Health: %s  ·  Cycles: %d  ·  %s",
+			healthStr, info.CycleCount, energyStr)) + "\n")
+		if info.PowerNow > 0 {
+			b.WriteString("  " + dimStyle.Render(fmt.Sprintf("Power: %.1f W", info.PowerNow)) + "\n")
+		}
+		if i < len(m.batInfos)-1 {
+			b.WriteString("\n")
+		}
 	}
 
 	b.WriteString("\n")

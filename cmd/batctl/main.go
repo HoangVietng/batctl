@@ -112,7 +112,6 @@ func setCmd() *cobra.Command {
 			if len(bats) == 0 {
 				return fmt.Errorf("no batteries found")
 			}
-			bat := bats[0]
 
 			if presetName != "" {
 				p, ok := preset.FindByID(presetName)
@@ -130,11 +129,12 @@ func setCmd() *cobra.Command {
 				return fmt.Errorf("invalid thresholds: %w", err)
 			}
 
-			if err := b.SetThresholds(bat, startVal, stopVal); err != nil {
-				return fmt.Errorf("setting thresholds: %w", err)
+			for _, bat := range bats {
+				if err := b.SetThresholds(bat, startVal, stopVal); err != nil {
+					return fmt.Errorf("setting thresholds on %s: %w", bat, err)
+				}
+				fmt.Printf("Thresholds set: start=%d%% stop=%d%% on %s\n", startVal, stopVal, bat)
 			}
-
-			fmt.Printf("Thresholds set: start=%d%% stop=%d%% on %s\n", startVal, stopVal, bat)
 			return nil
 		},
 	}
@@ -161,11 +161,19 @@ func applyCmd() *cobra.Command {
 				return err
 			}
 
-			if err := b.SetThresholds(cfg.Battery, cfg.Start, cfg.Stop); err != nil {
-				return fmt.Errorf("applying thresholds: %w", err)
+			var bats []string
+			if cfg.Battery == "all" {
+				bats = battery.ListBatteries()
+			} else {
+				bats = []string{cfg.Battery}
 			}
 
-			fmt.Printf("Applied: start=%d%% stop=%d%% on %s\n", cfg.Start, cfg.Stop, cfg.Battery)
+			for _, bat := range bats {
+				if err := b.SetThresholds(bat, cfg.Start, cfg.Stop); err != nil {
+					return fmt.Errorf("applying thresholds on %s: %w", bat, err)
+				}
+				fmt.Printf("Applied: start=%d%% stop=%d%% on %s\n", cfg.Start, cfg.Stop, bat)
+			}
 			return nil
 		},
 	}
@@ -191,8 +199,12 @@ func persistCmd() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("reading current thresholds: %w", err)
 				}
+				batName := bats[0]
+				if len(bats) > 1 {
+					batName = "all"
+				}
 				if err := persist.SaveConfig(persist.Config{
-					Battery: bats[0], Start: start, Stop: stop,
+					Battery: batName, Start: start, Stop: stop,
 				}); err != nil {
 					return fmt.Errorf("saving config: %w", err)
 				}
@@ -202,7 +214,7 @@ func persistCmd() *cobra.Command {
 				if err := persist.InstallResumeService(); err != nil {
 					return fmt.Errorf("installing resume service: %w", err)
 				}
-				fmt.Printf("Persistence enabled: start=%d%% stop=%d%% on %s\n", start, stop, bats[0])
+				fmt.Printf("Persistence enabled: start=%d%% stop=%d%% on %s\n", start, stop, batName)
 				fmt.Println("Systemd services installed (boot + resume).")
 				return nil
 

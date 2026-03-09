@@ -48,12 +48,12 @@ type model struct {
 	width         int
 	height        int
 
-	vendorName  string
-	productName string
-	batInfo     battery.Info
-	persistSvc  bool
+	vendorName    string
+	productName   string
+	batInfos      []battery.Info
+	persistSvc    bool
 	persistResume bool
-	persistCfg  *persist.Config
+	persistCfg    *persist.Config
 }
 
 func initialModel() (model, error) {
@@ -82,7 +82,7 @@ func initialModel() (model, error) {
 
 func (m *model) refreshAll() {
 	m.refreshThresholds()
-	m.refreshBatInfo()
+	m.refreshBatInfos()
 	m.refreshPersistStatus()
 }
 
@@ -113,13 +113,13 @@ func (m *model) refreshThresholds() {
 	}
 }
 
-func (m *model) refreshBatInfo() {
-	if len(m.batteries) == 0 {
-		return
-	}
-	info, err := battery.ReadInfo(m.batteries[0])
-	if err == nil {
-		m.batInfo = info
+func (m *model) refreshBatInfos() {
+	m.batInfos = nil
+	for _, bat := range m.batteries {
+		info, err := battery.ReadInfo(bat)
+		if err == nil {
+			m.batInfos = append(m.batInfos, info)
+		}
 	}
 }
 
@@ -311,27 +311,32 @@ func (m *model) applyAndSave() tea.Cmd {
 	if len(m.batteries) == 0 {
 		return nil
 	}
-	bat := m.batteries[0]
-
-	if err := m.backend.SetThresholds(bat, m.startVal, m.stopVal); err != nil {
-		return m.setMessage(fmt.Sprintf("Error: %v", err), errorStyle)
-	}
 
 	caps := m.backend.Capabilities()
-	if caps.ChargeBehaviour && m.behaviourCur != "" {
-		if err := m.backend.SetChargeBehaviour(bat, m.behaviourCur); err != nil {
-			return m.setMessage(fmt.Sprintf("Thresholds set, but behaviour error: %v", err), errorStyle)
+
+	for _, bat := range m.batteries {
+		if err := m.backend.SetThresholds(bat, m.startVal, m.stopVal); err != nil {
+			return m.setMessage(fmt.Sprintf("Error on %s: %v", bat, err), errorStyle)
+		}
+		if caps.ChargeBehaviour && m.behaviourCur != "" {
+			if err := m.backend.SetChargeBehaviour(bat, m.behaviourCur); err != nil {
+				return m.setMessage(fmt.Sprintf("Thresholds set, but behaviour error on %s: %v", bat, err), errorStyle)
+			}
 		}
 	}
 
-	cfg := persist.Config{Battery: bat, Start: m.startVal, Stop: m.stopVal}
+	batName := m.batteries[0]
+	if len(m.batteries) > 1 {
+		batName = "all"
+	}
+	cfg := persist.Config{Battery: batName, Start: m.startVal, Stop: m.stopVal}
 	if err := persist.SaveConfig(cfg); err != nil {
-		m.refreshBatInfo()
-		return m.setMessage(fmt.Sprintf("Applied %d/%d (config save failed: %v)", m.startVal, m.stopVal, errorStyle), errorStyle)
+		m.refreshBatInfos()
+		return m.setMessage(fmt.Sprintf("Applied %d/%d (config save failed: %v)", m.startVal, m.stopVal, err), errorStyle)
 	}
 
 	m.dirty = false
-	m.refreshBatInfo()
+	m.refreshBatInfos()
 	m.refreshPersistStatus()
 	return m.setMessage(fmt.Sprintf("Applied & saved: %d%%–%d%%", m.startVal, m.stopVal), successStyle)
 }
