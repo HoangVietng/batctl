@@ -276,7 +276,8 @@ batctl/
 
 ## Community Projects
 
-- **[threshpad](https://github.com/looselyhuman/threshpad)** — GNOME Shell extension for batctl with dual-battery support (ThinkPad)
+
+- **[threshpad](https://github.com/looselyhuman/threshpad)** — GNOME Shell extension for batctl
 
 ## Contributing
 
