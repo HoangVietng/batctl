@@ -38,6 +38,10 @@ var vendorHints = []vendorHint{
 		"      On older kernels: yay -S msi-ec-dkms"},
 	{"Acer", "Hint: this backend requires a separate kernel module (not in mainline).\n" +
 		"      On Arch: yay -S acer-wmi-battery-dkms && sudo modprobe acer-wmi-battery"},
+	{"HP", "Hint: HP has limited kernel support for charge thresholds.\n" +
+		"      Try: sudo modprobe hp-wmi\n" +
+		"      Then check: ls /sys/class/power_supply/BAT*/charge_control_*\n" +
+		"      If no files appear, check BIOS for \"Battery Care\" or \"Adaptive Battery Optimizer\""},
 	{"Framework", "Hint: try loading the kernel module (included in kernel):\n" +
 		"      sudo modprobe cros_ec_lpcs"},
 	{"System76", "Hint: try loading the kernel module (included in kernel):\n" +
