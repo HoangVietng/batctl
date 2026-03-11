@@ -64,7 +64,13 @@ func AdaptToBackend(p Preset, b backend.Backend) (int, int, error) {
 		stop = clamp(stop, caps.StopRange[0], caps.StopRange[1])
 	}
 
-	if caps.StartThreshold {
+	if caps.StartStopGap > 0 {
+		start = stop - caps.StartStopGap
+		if start < caps.StartRange[0] {
+			start = caps.StartRange[0]
+			stop = start + caps.StartStopGap
+		}
+	} else if caps.StartThreshold {
 		start = clamp(start, caps.StartRange[0], caps.StartRange[1])
 		if start >= stop {
 			start = stop - 1

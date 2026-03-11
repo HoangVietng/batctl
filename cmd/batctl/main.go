@@ -66,7 +66,9 @@ func statusCmd() *cobra.Command {
 				fmt.Printf("  Status:     %s\n", info.Status)
 				fmt.Printf("  Capacity:   %d%%\n", info.Capacity)
 				fmt.Printf("  Health:     %.1f%%\n", info.HealthPercent)
-				fmt.Printf("  Cycles:     %d\n", info.CycleCount)
+				if info.CycleCount > 0 {
+					fmt.Printf("  Cycles:     %d\n", info.CycleCount)
+				}
 				fmt.Printf("  Energy:     %.1f / %.1f Wh (design: %.1f Wh)\n",
 					info.EnergyNow, info.EnergyFull, info.EnergyDesign)
 				if info.PowerNow > 0 {

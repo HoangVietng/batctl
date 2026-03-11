@@ -283,7 +283,13 @@ func (m *model) adjustValue(delta int) {
 		if m.startVal > caps.StartRange[1] {
 			m.startVal = caps.StartRange[1]
 		}
-		if m.startVal >= m.stopVal {
+		if caps.StartStopGap > 0 {
+			m.stopVal = m.startVal + caps.StartStopGap
+			if m.stopVal > caps.StopRange[1] {
+				m.stopVal = caps.StopRange[1]
+				m.startVal = m.stopVal - caps.StartStopGap
+			}
+		} else if m.startVal >= m.stopVal {
 			m.startVal = m.stopVal - 1
 		}
 
@@ -298,6 +304,13 @@ func (m *model) adjustValue(delta int) {
 			}
 			if m.stopVal > caps.StopRange[1] {
 				m.stopVal = caps.StopRange[1]
+			}
+		}
+		if caps.StartStopGap > 0 {
+			m.startVal = m.stopVal - caps.StartStopGap
+			if m.startVal < caps.StartRange[0] {
+				m.startVal = caps.StartRange[0]
+				m.stopVal = m.startVal + caps.StartStopGap
 			}
 		}
 

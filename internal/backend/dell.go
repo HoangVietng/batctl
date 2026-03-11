@@ -33,7 +33,7 @@ func (b *DellBackend) Capabilities() Capabilities {
 		ChargeBehaviour: false,
 		StartRange:      [2]int{50, 95},
 		StopRange:       [2]int{55, 100},
-		DiscreteStopVals: nil,
+		StartStopGap:    5,
 	}
 }
 

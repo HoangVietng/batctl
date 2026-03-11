@@ -33,8 +33,13 @@ func renderDashboard(m model) string {
 
 		healthStr := fmt.Sprintf("%.1f%%", info.HealthPercent)
 		energyStr := fmt.Sprintf("%.1f / %.1f Wh", info.EnergyNow, info.EnergyFull)
-		b.WriteString("  " + dimStyle.Render(fmt.Sprintf("Health: %s  ·  Cycles: %d  ·  %s",
-			healthStr, info.CycleCount, energyStr)) + "\n")
+		if info.CycleCount > 0 {
+			b.WriteString("  " + dimStyle.Render(fmt.Sprintf("Health: %s  ·  Cycles: %d  ·  %s",
+				healthStr, info.CycleCount, energyStr)) + "\n")
+		} else {
+			b.WriteString("  " + dimStyle.Render(fmt.Sprintf("Health: %s  ·  %s",
+				healthStr, energyStr)) + "\n")
+		}
 		if info.PowerNow > 0 {
 			b.WriteString("  " + dimStyle.Render(fmt.Sprintf("Power: %.1f W", info.PowerNow)) + "\n")
 		}

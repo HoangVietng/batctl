@@ -56,6 +56,9 @@ func (m *mockBackend) ValidateThresholds(start, stop int) error {
 	if caps.StartThreshold && start >= stop {
 		return fmt.Errorf("start >= stop")
 	}
+	if caps.StartStopGap > 0 && stop-start != caps.StartStopGap {
+		return fmt.Errorf("gap must be %d, got %d", caps.StartStopGap, stop-start)
+	}
 	return nil
 }
 
@@ -151,6 +154,7 @@ func TestAdaptToBackend(t *testing.T) {
 	dellCaps := backend.Capabilities{
 		StartThreshold: true, StopThreshold: true,
 		StartRange: [2]int{50, 95}, StopRange: [2]int{55, 100},
+		StartStopGap: 5,
 	}
 
 	tests := []struct {
@@ -186,10 +190,28 @@ func TestAdaptToBackend(t *testing.T) {
 			0, 80, false,
 		},
 		{
-			"Dell max-lifespan (clamped start)",
+			"Dell max-lifespan (gap-adjusted to 75/80)",
 			Preset{ID: "max-lifespan", Start: 20, Stop: 80},
 			&mockBackend{name: "Dell", caps: dellCaps},
-			50, 80, false,
+			75, 80, false,
+		},
+		{
+			"Dell full-charge (gap-adjusted to 95/100)",
+			Preset{ID: "full-charge", Start: 0, Stop: 100},
+			&mockBackend{name: "Dell", caps: dellCaps},
+			95, 100, false,
+		},
+		{
+			"Dell balanced (gap-adjusted to 75/80)",
+			Preset{ID: "balanced", Start: 40, Stop: 80},
+			&mockBackend{name: "Dell", caps: dellCaps},
+			75, 80, false,
+		},
+		{
+			"Dell plugged-in (gap-adjusted to 75/80)",
+			Preset{ID: "plugged-in", Start: 70, Stop: 80},
+			&mockBackend{name: "Dell", caps: dellCaps},
+			75, 80, false,
 		},
 		{
 			"ThinkPad full-charge",

@@ -10,6 +10,7 @@ type Capabilities struct {
 	StopRange         [2]int // min, max
 	DiscreteStopVals  []int  // for vendors with fixed stop values (Sony: 50/80/100)
 	StartAutoComputed bool   // MSI: start = stop - 10 automatically
+	StartStopGap      int    // if non-zero, hardware enforces start = stop - gap (Dell: 5)
 }
 
 type Backend interface {
